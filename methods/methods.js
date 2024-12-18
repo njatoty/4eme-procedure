@@ -236,7 +236,7 @@ async function generateReport(data = []) {
         const formulaRenumeration = `ROUND(FLOOR(${cell(salaire_brut)}-${cell(total_retenues)},0.01), -2)`;
         row.getCell(renumeration_dues).value = { formula: formulaRenumeration };
 
-        
+
         /**
          * Heures supplémentaires
          * Formula ex:
@@ -484,9 +484,9 @@ const GSS_Columns = {
     },
 };
 
-async function gss(){
+async function extractDataInGSS(gssPath){
 
-    const wb = XLSX.readFile('./gss.xlsx');
+    const wb = XLSX.readFile(gssPath);
 
     const data = [];
 
@@ -518,51 +518,11 @@ async function gss(){
         }
     }
 
-    generateReport(data)
+    return data;
 
 }
 
-
-function findCellByValue(sheet, targetValue) {
-
-    if (!sheet || !sheet['!ref']) return;
-
-    // Convert targetValue to numeric if it's a percentage as a string
-    let targetNumericValue = targetValue;
-    if (typeof targetValue === 'string' && targetValue.includes('%')) {
-        targetNumericValue = parseFloat(targetValue) / 100;
-    }
-    // Get the range of the sheet
-    const range = XLSX.utils.decode_range(sheet['!ref']);
-
-    // Iterate through all cells in the range
-    for (let row = range.s.r; row <= range.e.r; row++) {
-        for (let col = range.s.c; col <= range.e.c; col++) {
-            // Convert row and column to cell address (e.g., A1, B2)
-            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-            const cell = sheet[cellAddress];
-
-            // Check if the cell exists and matches the target value
-            if (cell) {
-                // Exact match check
-                if (cell.v === targetNumericValue) {
-                    return cellAddress; // Return the address of the cell with exact value match
-                }
-
-                // Percentage check
-                if (cell.t === 'n' && cell.z && cell.z.includes('%') && cell.v === targetNumericValue) {
-                    return cellAddress; // Return the address if it's a percentage-formatted cell
-                }
-            }
-        }
-    }
-
-    return null; // Return null if no matching cell is found
+module.exports = {
+    extractDataInGSS,
+    generateReport
 }
-
-function replaceNumber(cellAddress, n) {
-    if (!cellAddress) return;
-    // Use regex to replace digits with a dash
-    return cellAddress.replace(/\d+/g, n);
-}
-gss();
