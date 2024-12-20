@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fichePaieRouter = require('./routes/fiche-paie-route');
+const templateRouter = require('./routes/template-route');
+
 const path = require("path");
 // Initialize the app
 const app = express();
@@ -18,6 +20,7 @@ const PORT = process.env.PORT || 6969;
 
 // Routes
 app.use('/fiche-paie', fichePaieRouter);
+app.use('/template', templateRouter);
 
 // Start the server
 app.listen(PORT, () => {
