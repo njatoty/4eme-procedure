@@ -111,14 +111,14 @@ async function generateReport(filePath, outFileName, data = []) {
             row.getCell(ColumnName.salaire_correspondant).value = employee.salaire_correspondant || 0;
 
             // ADD Other if needed
-            
+
         }
 
         // Commit the row changes
         row.commit();
     }
 
-    
+
     // useful variables
     const {
         salaire_base, salaire_correspondant, rendements, salaire_brut, cnaps, ostie, avance_salaire, salaire_imposable,
@@ -134,7 +134,7 @@ async function generateReport(filePath, outFileName, data = []) {
     */
     const endRow = sheet.getRow(endRowIndex);
     // reusable func for creating SUM formula 
-    const formulaSUM = (col) => `SUM(${col + startIndex}:${col + (endRowIndex-1)})`;
+    const formulaSUM = (col) => `SUM(${col + startIndex}:${col + (endRowIndex - 1)})`;
     // reusable func for add formula to a cell
     const addFormulaSUMTo = (col) => endRow.getCell(col).value = { formula: formulaSUM(col) };
 
@@ -155,7 +155,7 @@ async function generateReport(filePath, outFileName, data = []) {
         // add formula SUM (somme) to these columns
         addFormulaSUMTo(col);
     });
-    
+
 
 
     /**
@@ -170,7 +170,7 @@ async function generateReport(filePath, outFileName, data = []) {
         // get row each line
         const row = sheet.getRow(i);
         const cell = (col) => col + i; // cell(A) = A + i
-        
+
         /**
          * FORMULAS pour le salaire brut
          * Formula ex: SOMME(E11:R11)
@@ -180,7 +180,7 @@ async function generateReport(filePath, outFileName, data = []) {
         const formulaBrut = `SUM(${cell(salaire_correspondant)}:${cell(rendements)})`;
         row.getCell(salaire_brut).value = { formula: formulaBrut };
 
-            
+
         /**
          * CNAPS & OSTIE Formula
          * Formula ex:
@@ -200,7 +200,7 @@ async function generateReport(filePath, outFileName, data = []) {
          * @V : ostie
          */
         const formulaImposable = `${cell(salaire_brut)}-${cell(cnaps)}-${cell(ostie)}`;
-        row.getCell(salaire_imposable).value = { formula: formulaImposable};
+        row.getCell(salaire_imposable).value = { formula: formulaImposable };
 
 
         /**
@@ -270,7 +270,7 @@ async function generateReport(filePath, outFileName, data = []) {
         });
 
     }
-    
+
 
     // Write the updated workbook to a new file
     await workbook.xlsx.writeFile(outFileName);
@@ -485,7 +485,7 @@ const GSS_Columns = {
     },
 };
 
-async function extractDataInGSS(gssPath){
+async function extractDataInGSS(gssPath) {
 
     const wb = XLSX.readFile(gssPath);
 
@@ -505,13 +505,13 @@ async function extractDataInGSS(gssPath){
         // loop through rows
         for (let j = 5; j <= rowCount; j++) {
 
-            if (!sheet[GSS_Columns[`sheet${i+1}`].m_code + j]) {
+            if (!sheet[GSS_Columns[`sheet${i + 1}`].m_code + j]) {
                 if (j > 5) break;
                 continue;
             }
 
             const rowData = {};
-            Object.entries(GSS_Columns[`sheet${i+1}`]).map(([key, value]) => {
+            Object.entries(GSS_Columns[`sheet${i + 1}`]).map(([key, value]) => {
                 rowData[key] = sheet[value + j]?.v;
             });
 
@@ -528,65 +528,179 @@ async function extractDataInGSS(gssPath){
  * Method to generate FP in excel
  * 
  */
-async function generateFP () {
-    
+async function generateFP() {
     const workbook = new ExcelJS.Workbook();
 
     // Load the workbook
     await workbook.xlsx.readFile('./template.xlsx');
 
-    const fpSheet = workbook.worksheets[4];
-    let startRow = 1, endRow = 55;
-    let startCol = 'A', endCol = 'B';
-
-    
-
-    // // Get the target sheet (assuming the fourth sheet)
-    // const sheet = workbook.worksheets[3];
-
-    // // Determine row count
-    // const rowCount = sheet.rowCount;
+    // get data from EMEMENT DE PAIE
+    const sheet = workbook.worksheets[3];
+    const rowCount = sheet.rowCount;
 
 
-    // // Loop through rows starting at row 10
-    // let startIndex = 10, endRowIndex = 0;
-    // for (let rowIndex = startIndex; rowIndex <= rowCount; rowIndex++) {
-    //     const row = sheet.getRow(rowIndex);
+    // Loop through rows starting at row 10
+    let startIndex = 10;
+    const paieData = [];
+    for (let rowIndex = startIndex; rowIndex <= rowCount; rowIndex++) {
+        if (!sheet.getCell('A' + rowIndex).value) break;
 
-    //     // Read cell values
-    //     const nom = row.getCell(ColumnName.nom).value;
-    //     if (!nom) {
-    //         endRowIndex = rowIndex;
-    //         break;
-    //     };
+        let data = {};
+        Object.entries(ColumnName).map(([key, value]) => {
+            data[key] = sheet.getCell(value + rowIndex).value;
+        });
 
-    //     const m_code = row.getCell(ColumnName.m_code).value;
-    //     const numbering = row.getCell(ColumnName.numbering).value;
+        paieData.push(data)
+    }
 
-    //     // Find employee by M-CODE and Numbering
-    //     const employee = data.find(
-    //         (d) => reg(d.m_code).test(m_code) || reg(d.numbering).test(numbering)
-    //     );
+    const worksheet = workbook.worksheets[4];
+    const sourceStartCol = 1; // 'A'
+    const sourceEndCol = 6;   // 'F'
+    const sourceStartRow = 1;
+    const sourceEndRow = 55;  // Adjust this to the last row of the data block
 
-    //     if (employee) {
-    //         // Update Transport and Repas columns
-    //         row.getCell(ColumnName.transport).value = employee.transport || 0;
-    //         row.getCell(ColumnName.repas).value = employee.repas || 0;
-    //         // coller le salaire correspondant:
-    //         row.getCell(ColumnName.salaire_correspondant).value = employee.salaire_correspondant || 0;
+    const duplicateCount = paieData.length; // Total number of duplications to make
+    const duplicatePerRow = 2; // Number of duplicates per row in each batch
+    const rowGap = 2; // Gap of two rows
+    const colGap = 1; // Gap of one column
 
-    //         // ADD Other if needed
-            
-    //     }
+    // Loop to duplicate data
+    for (let batch = 0; batch < duplicateCount; batch++) {
+        const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
+        const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
 
-    //     // Commit the row changes
-    //     row.commit();
-    // }
+        // Add logo at the starting cell of each duplicated block
+        addLogo(workbook, worksheet, colOffset, rowOffset);
 
+        // Copy merged cells
+        Object.keys(worksheet._merges).forEach((mergeKey) => {
+            const merge = worksheet._merges[mergeKey];
+            const { top, left, bottom, right } = merge;
+            if (top >= sourceStartRow && bottom <= sourceEndRow && left >= sourceStartCol && right <= sourceEndCol) {
+                const targetTop = top + rowOffset;
+                const targetLeft = left + colOffset;
+                const targetBottom = bottom + rowOffset;
+                const targetRight = right + colOffset;
+
+                // Check if the target cells are already merged
+                const isAlreadyMerged = Object.values(worksheet._merges).some(
+                    (existingMerge) =>
+                        existingMerge.top === targetTop &&
+                        existingMerge.left === targetLeft &&
+                        existingMerge.bottom === targetBottom &&
+                        existingMerge.right === targetRight
+                );
+
+                if (!isAlreadyMerged) {
+                    worksheet.mergeCells(targetTop, targetLeft, targetBottom, targetRight);
+                }
+            }
+        });
+
+        // Copy individual cells
+        for (let row = sourceStartRow; row <= sourceEndRow; row++) {
+            for (let col = sourceStartCol; col <= sourceEndCol; col++) {
+                const cell = worksheet.getCell(row, col);
+                const targetCell = worksheet.getCell(row + rowOffset, col + colOffset);
+                targetCell.value = cell.value;
+                targetCell.style = { ...cell.style }; // Copy styles
+            }
+        }
+
+        // Copy column widths
+        for (let col = sourceStartCol; col <= sourceEndCol; col++) {
+            const sourceColumn = worksheet.getColumn(col);
+            const targetColumn = worksheet.getColumn(col + colOffset);
+            targetColumn.width = sourceColumn.width;
+        }
+    }
+
+    // After duplication, update the cells containing {M_CODE}
+    for (let batch = 0; batch < duplicateCount; batch++) {
+        const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
+        const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
+
+        // Find cell by value within the specific range of the duplicated block
+        const cellAddress = (key) => findCellByValueInRange(worksheet, key, sourceStartRow + rowOffset, sourceEndRow + rowOffset, sourceStartCol + colOffset, sourceEndCol + colOffset);
+
+        // Create a formula to link to the corresponding cell in the ETAT DE PAIE sheet
+        const createLinkFormula = (cell) => `'${sheet.name}'!${cell}${startIndex + batch}`;
+
+        // Find the cell containing {M_CODE} and update it with a formula
+        // cells to link
+        const cellsToLink = ['nom', 'm_code', 'matricule', 'adresse', 'usuel', 'embauche', 'matricule_cnaps', 'cin',];
+        cellsToLink.map(cell => {
+            const address = cellAddress(`{${cell.toUpperCase()}}`);
+            if (address) {
+                const cellRef = worksheet.getCell(address);
+                if (typeof cellRef.value === 'string') {
+                    cellRef.value = { formula: createLinkFormula(ColumnName[cell]) };
+                }
+            }
+        });
+
+    }
+
+    await workbook.xlsx.writeFile('./output.xlsx');
+    console.log('done!');
+}
+
+function addLogo(wb, ws, colOffset, rowOffset) {
+    // Add the image to the workbook
+    const imageId = wb.addImage({
+        filename: './public/images/logo.jpg', // Replace with your image file path
+        extension: 'png',
+    });
+
+    // Convert cm to pixels (ExcelJS uses pixels for positioning)
+    const cmToPx = (cm) => cm * 37.795276; // 1 cm = 37.795276 pixels
+
+    const positionX = cmToPx(0.03); // Convert Position X to pixels
+    const positionY = cmToPx(0.00); // Convert Position Y to pixels
+    const width = cmToPx(5.63); // Convert Width to pixels
+    const height = cmToPx(0.90); // Convert Height to pixels
+
+    // Position and size the image
+    ws.addImage(imageId, {
+        tl: { col: colOffset, row: rowOffset, nativeX: positionX, nativeY: positionY }, // Top-left corner with fine-tuning
+        ext: { width, height }, // Width and height in pixels
+    });
 }
 
 
+/**
+ * Function to find a cell by its value containing the specified key within a specific range
+ * @param {Worksheet} worksheet - The worksheet to search in
+ * @param {string} key - The key to search for within cell values
+ * @param {number} startRow - The starting row of the range
+ * @param {number} endRow - The ending row of the range
+ * @param {number} startCol - The starting column of the range
+ * @param {number} endCol - The ending column of the range
+ * @returns {string} - The cell address (e.g., 'A1') or null if not found
+ */
+function findCellByValueInRange(worksheet, key, startRow, endRow, startCol, endCol) {
+    for (let rowIndex = startRow; rowIndex <= endRow; rowIndex++) {
+        const row = worksheet.getRow(rowIndex);
+        for (let colIndex = startCol; colIndex <= endCol; colIndex++) {
+            const cell = row.getCell(colIndex);
+            if (typeof cell.value === 'string' && cell.value.includes(key)) {
+                return cell.address;
+            } else if (cell.value && cell.value.richText) {
+                for (const part of cell.value.richText) {
+                    if (part.text.includes(key)) {
+                        return cell.address;
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
+generateFP();
+
 module.exports = {
     extractDataInGSS,
-    generateReport
+    generateReport,
+    findCellByValueInRange
 }
