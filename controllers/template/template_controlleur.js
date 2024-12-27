@@ -1,83 +1,116 @@
 const File = require('../../models/File');
 
-async function createFile (req, res)  {
-    try {
-        const file = new File(req.body);
-        await file.save();
-        res.status(201).send(file);
-    } catch (error) {
-        res.status(400).send({ error: 'Unable to create file', details: error.message });
+// Add or update a single column
+const addOrUpdateColumn = async (req, res) => {
+  try {
+    const { sheetName,  columnName, columnValue } = req.body;
+    
+    // Validate input
+    if (!sheetName || ! columnName || columnValue === undefined) {
+      return res.status(400).json({ error: 'Invalid data provided' });
     }
+
+    // Find the sheet and update the specific column
+    const updatedSheet = await File.findOneAndUpdate(
+      { sheetName },
+      { $set: { [`columns.${columnName}`]: columnValue } }, // Dynamically set column
+      { new: true }
+    );
+
+    
+
+    if (!updatedSheet) {
+      return res.status(404).json({ error: 'Sheet not found' });
+    }
+
+    res.status(200).json({ message: 'ok', sheet: updatedSheet });
+  } catch (error) {
+    console.error('Error updating column:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
-async function getAllColumns (req, res)   {
-    try {
-        const files = await File.find({});
-        res.status(200).send(files);
-    } catch (error) {
-        res.status(500).send({ error: 'Unable to fetch files', details: error.message });
+
+// update more columns
+const updateColumn = async (req, res) => {
+  try {
+    const { sheetName,  columns } = req.body;
+    
+    // Validate input
+    if (!sheetName || ! columns ) {
+      return res.status(400).json({ error: 'Invalid data provided' });
     }
+
+    // Find the sheet and update the specific column
+    const updatedSheet = await File.findOneAndUpdate(
+      { sheetName },
+      { $set: { columns } }, // Dynamically set column
+      { new: true }
+    );    
+
+    if (!updatedSheet) {
+      return res.status(404).json({ error: 'Sheet not found' });
+    }
+
+    res.status(200).json({ message: 'ok', sheet: updatedSheet });
+  } catch (error) {
+    console.error('Error updating column:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
-const getFileById = async (req, res) => {
-    try {
-        const file = await File.findById(req.params.id);
-        if (!file) {
-            return res.status(404).send({ error: 'File not found' });
-        }
-        res.status(200).send(file);
-    } catch (error) {
-        res.status(500).send({ error: 'Unable to fetch file', details: error.message });
+// Remove a column from the sheet
+const removeColumn = async (req, res) => {
+  try {
+    const { sheetName, columnName } = req.body;
+    
+    // Validate input
+    if (!sheetName || !columnName) {
+      return res.status(400).json({ error: 'Invalid data provided' });
     }
+
+    // Find the sheet and remove the specific column
+    const updatedSheet = await File.findOneAndUpdate(
+      { sheetName },
+      { $unset: { [`columns.${columnName}`]: '' } }, // Dynamically unset column
+      { new: true }
+    );
+
+    if (!updatedSheet) {
+      return res.status(404).json({ error: 'Sheet not found' });
+    }
+    
+    res.status(200).json({ message: 'ok', sheet: updatedSheet });
+  } catch (error) {
+    console.error('Error removing column:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
-const updateFileById = async (req, res) => {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ['name', 'content']; // Add other fields as necessary
-    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+// Get all columns of a specific sheet
+const getColumns = async (req, res) => {
+  try {
+    const { sheetName } = req.params;
 
-    if (!isValidOperation) {
-        return res.status(400).send({ error: 'Invalid updates!' });
+    // Find the sheet
+    const sheet = await File.findOne({ sheetName });
+
+    if (!sheet) {
+      return res.status(404).json({ error: 'Sheet not found' });
     }
 
-    try {
-        const file = await File.findById(req.params.id);
-        if (!file) {
-            return res.status(404).send({ error: 'File not found' });
-        }
-
-        updates.forEach(update => (file[update] = req.body[update]));
-        await file.save();
-        res.status(200).send(file);
-    } catch (error) {
-        res.status(400).send({ error: 'Unable to update file', details: error.message });
-    }
-};
-
-const deleteFileById = async (req, res) => {
-    try {
-        const file = await File.findByIdAndDelete(req.params.id);
-        console.log(" file", file);
-        
-        if (!file) {
-            return res.status(404).send({ error: 'File not found' });
-        }
-        res.status(200).send(file);
-    } catch (error) {
-        res.status(500).send({ error: 'Unable to delete file', details: error.message });
-    }
+    res.status(200).json({ columns: sheet.columns });
+  } catch (error) {
+    console.error('Error retrieving columns:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 
 async function createSheet (req, res)  {
     try {
         const file = new File(req.body);
-        console.log(" req.body", req.body);
-        
-        console.log(" file", file);
-        
-        var f = await file.save();
-        console.log(" f", f);
+        await file.save();
         
         res.status(201).send(file);
     } catch (error) {
@@ -85,20 +118,53 @@ async function createSheet (req, res)  {
     }
 };
 
-// async function getAllFiles (req, res)   {
-//     try {
-//         const files = await File.find({});
-//         res.status(200).send(files);
-//     } catch (error) {
-//         res.status(500).send({ error: 'Unable to fetch files', details: error.message });
-//     }
-// };
 
+// Remove a sheet from the sheet
+async function deleteSheetById (req, res) {
+  try {
+
+    const { id } = req.params;
+
+    // Validate input
+    if (!id) {
+      return res.status(400).json({ error: 'Invalid data provided' });
+    }
+
+    // Find the sheet and remove it
+    const deletedSheet = await File.findByIdAndDelete(id);
+    
+    if (!deletedSheet) {
+      return res.status(404).json({ error: 'Sheet not found' });
+    }
+
+    res.status(200).json({ message: 'Sheet deleted successfully', sheet: deletedSheet });
+    
+  } catch (error) {
+    console.error('Error removing column:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+async function allColumns (req, res) {
+    try {
+        const files = await File.find();
+        
+        res.status(200).send(files);
+    } catch (error) {
+        res.status(500).send({ error: 'Unable to fetch files', details: error.message });
+    }
+}
 module.exports = {
-    createFile , getAllColumns,
-     getFileById, updateFileById, deleteFileById,
-     createSheet
-    } 
+  addOrUpdateColumn,
+  removeColumn,
+  getColumns,
+  createSheet,
+  allColumns,
+  deleteSheetById,
+  updateColumn
+};
+
 // (router) => {
 //     router.post('/files', createFile);
 //     router.get('/files', getAllFiles);
