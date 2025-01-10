@@ -84,7 +84,9 @@ async function startProcessus(req, res) {
 
     // Access the uploaded files
     const gssFile = req.files['gss'] ? req.files['gss'][0] : null; // First (and only) 'gss' file
+    
     const templateFile = req.files['template'] ? req.files['template'][0] : null; //
+    
 
     // check gss file
     if (!gssFile) {
@@ -108,10 +110,12 @@ async function startProcessus(req, res) {
 async function copyDataInTheTemplate(req, res) {
     try {
         
-        const { data } = req.body;
+        const { data, variable } = req.body;
+        
+        
         const templatePath = uploadsPath + '/template.xlsx';
         const outFileName = 'result.xlsx'
-        const out = await generateReport(templatePath, outFileName, data);
+        const out = await generateReport(templatePath, outFileName, data, variable);
 
         res.download(out);
         

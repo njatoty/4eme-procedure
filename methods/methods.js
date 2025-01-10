@@ -1,9 +1,13 @@
 const XLSX = require('xlsx');
 const ExcelJS = require('exceljs');
 // variables
-const PLAFOND_SALARIAL = 262680;
+// const PLAFOND_SALARIAL = 262680;
 const DUREE_PLAFONNEE = 8;
 const TAUX_DE_RETENUE_CNAPS = '1%';
+
+const { 
+    getAllColumns,
+} = require('../controllers/template/template_controlleur');
 
 const ColumnName = {
     nom: 'A',
@@ -43,41 +47,48 @@ const ColumnName = {
     personne_a_charge: 'X',
     avance_salaire: 'Y',
     irsa: 'Z',
-    reajustement: 'AA',
-    total_retenues: 'AB',
-    renumeration_dues: 'AC',
-    mode_paiement: 'AD',
-    observation: 'AE',
-    observation2: 'AF',
+    remboursement: 'AA',
+    reajustement: 'AB',
+    total_retenues: 'AC',
+    renumeration_dues: 'AD',
+    mode_paiement: 'AE',
+    observation: 'AF',
+    observation2: 'AG',
 
-    total_maj_nuit: 'AG',
-    total_maj_weekend: 'AH',
-    total_maj_ferie: 'AI',
-    total_maj_heure_suppl_130: 'AJ',
-    total_maj_heure_suppl_150: 'AK',
+    total_maj_nuit: 'AH',
+    total_maj_weekend: 'AI',
+    total_maj_ferie: 'AJ',
+    total_maj_heure_suppl_130: 'AK',
+    total_maj_heure_suppl_150: 'AL',
 
     // employee infos
-    usuel: 'AL',
-    m_code: 'AM',
-    numbering: 'AN',
-    matricule_cnaps: 'AO',
-    cin: 'AP',
-    embauche: 'AQ',
-    adresse: 'AR',
-    ordre: 'AS'
+    usuel: 'AM',
+    m_code: 'AN',
+    numbering: 'AO',
+    matricule_cnaps: 'AP',
+    cin: 'AQ',
+    embauche: 'AR',
+    adresse: 'AS',
+    ordre: 'AT'
 };
 
-// Helper to create regex for finding employees
+//Helper to create regex for finding employees
+
 const reg = (value) => new RegExp(`^${value}$`, 'i');
 
-async function generateReport(filePath, outFileName, data = []) {
+async function generateReport(filePath, outFileName, data = [], variable = {}) {
+    
     const workbook = new ExcelJS.Workbook();
+    
 
+    console.log("variable", variable);    
+    const PLAFOND_SALARIAL = parseInt(variable.plafondCnaps);
+    
     // Load the workbook
     await workbook.xlsx.readFile(filePath);
 
     // Get the target sheet (assuming the fourth sheet)
-    const sheet = workbook.worksheets[3];
+    const sheet = workbook.worksheets[1];  // 3
 
     // Determine row count
     const rowCount = sheet.rowCount;
@@ -292,211 +303,229 @@ async function generateReport(filePath, outFileName, data = []) {
  * - Total
  */
 
-const GSS_Columns = {
-    sheet1: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'O',
-        repas: 'P',
-        compensation: 'Q',
-        total: 'T',
-        heure_suppl_30: 'U',
-        heure_suppl_50: 'V',
-        heure_suppl_100: 'W',
-        heure_suppl_130: 'X',
-        heure_suppl_150: 'Y',
-        bonus: 'Z',
-        total2: 'AA',
-        salaire_correspondant: 'AB',
-        rendement: 'AC',
-        observation: 'AD',
-        maternity_allaitement_perm: 'Q',
-    },
-    sheet2: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'R',
-        repas: 'S',
-        compensation: 'T',
-        total: 'W',
-        heure_suppl_30: 'X',
-        heure_suppl_50: 'Y',
-        heure_suppl_100: 'Z',
-        heure_suppl_130: 'AA',
-        heure_suppl_150: 'AB',
-        bonus: 'AC',
-        total2: 'AD',
-        salaire_correspondant: 'AE',
-        rendement: 'AF',
-        observation: 'AG',
-        maternity_allaitement_perm: 'U',
-    },
-    sheet3: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'AB',
-        repas: 'AC',
-        compensation: 'AD',
-        total: 'AG',
-        heure_suppl_30: 'AH',
-        heure_suppl_50: 'AI',
-        heure_suppl_100: 'AJ',
-        heure_suppl_130: 'AK',
-        heure_suppl_150: 'AL',
-        bonus: 'AM',
-        total2: 'AN',
-        salaire_correspondant: 'AO',
-        rendement: 'AP',
-        observation: 'AQ',
-        maternity_allaitement_perm: 'AE',
-    },
-    sheet4: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'P',
-        repas: 'Q',
-        compensation: 'S',
-        total: 'V',
-        heure_suppl_30: 'W',
-        heure_suppl_50: 'X',
-        heure_suppl_100: 'Y',
-        heure_suppl_130: 'Z',
-        heure_suppl_150: 'AA',
-        bonus: 'AB',
-        total2: 'AC',
-        salaire_correspondant: 'AD',
-        rendement: 'AE',
-        observation: 'AF',
-        maternity_allaitement_perm: 'R',
-    },
-    sheet5: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'P',
-        repas: 'Q',
-        compensation: 'S',
-        total: 'U',
-        heure_suppl_30: 'V',
-        heure_suppl_50: 'W',
-        heure_suppl_100: 'X',
-        heure_suppl_130: 'Y',
-        heure_suppl_150: 'Z',
-        bonus: 'AA',
-        total2: 'AB',
-        salaire_correspondant: 'AC',
-        rendement: 'AD',
-        observation: 'AE',
-        maternity_allaitement_perm: 'R',
-    },
-    sheet6: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'L',
-        repas: 'M',
-        compensation: 'O',
-        total: 'P',
-        heure_suppl_30: 'Q',
-        heure_suppl_50: 'R',
-        heure_suppl_100: 'S',
-        heure_suppl_130: 'T',
-        heure_suppl_150: 'U',
-        bonus: 'V',
-        total2: 'W',
-        salaire_correspondant: 'X',
-        rendement: 'Y',
-        observation: 'Z',
-        maternity_allaitement_perm: 'N',
-    },
-    sheet7: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'N',
-        repas: 'O',
-        compensation: 'O',
-        total: 'S',
-        heure_suppl_30: 'T',
-        heure_suppl_50: 'U',
-        heure_suppl_100: 'V',
-        heure_suppl_130: 'W',
-        heure_suppl_150: 'X',
-        bonus: 'Y',
-        total2: 'Z',
-        salaire_correspondant: 'AA',
-        rendement: 'AB',
-        observation: 'AC',
-        maternity_allaitement_perm: 'P',
-    },
-    sheet8: {
-        numbering: 'A',
-        m_code: 'A',
-        transport: 'F',
-        repas: 'G',
-        // compensation: 'O',
-        total: 'I',
-        heure_suppl_30: 'J',
-        heure_suppl_50: 'K',
-        heure_suppl_100: 'L',
-        heure_suppl_130: 'M',
-        heure_suppl_150: 'N',
-        bonus: 'O',
-        total2: 'P',
-        salaire_correspondant: 'Q',
-        rendement: 'R',
-        observation: 'S',
-        maternity_allaitement_perm: 'H',
-    },
-    sheet9: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'I',
-        repas: 'J',
-        compensation: 'L',
-        total: 'N',
-        heure_suppl_30: 'O',
-        heure_suppl_50: 'P',
-        heure_suppl_100: 'Q',
-        heure_suppl_130: 'R',
-        heure_suppl_150: 'S',
-        bonus: 'T',
-        total2: 'U',
-        salaire_correspondant: 'V',
-        rendement: 'W',
-        observation: 'X',
-        maternity_allaitement_perm: 'K',
-    },
-    sheet10: {
-        numbering: 'A',
-        m_code: 'B',
-        transport: 'L',
-        repas: 'M',
-        compensation: 'O',
-        total: 'Q',
-        heure_suppl_30: 'R',
-        heure_suppl_50: 'S',
-        heure_suppl_100: 'T',
-        heure_suppl_130: 'U',
-        heure_suppl_150: 'V',
-        bonus: 'W',
-        total2: 'X',
-        salaire_correspondant: 'Y',
-        rendement: 'Z',
-        observation: 'AA',
-        maternity_allaitement_perm: 'N',
-    },
-};
+// const ColumnName = await File.find()
+// console.log("ColumnName",     allColumns,
+// );
+
+
+var GSS_Columns 
+
+// const GSS_Columns = {
+//     sheet1: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'O',
+//         repas: 'P',
+//         compensation: 'Q',
+//         total: 'T',
+//         heure_suppl_30: 'U',
+//         heure_suppl_50: 'V',
+//         heure_suppl_100: 'W',
+//         heure_suppl_130: 'X',
+//         heure_suppl_150: 'Y',
+//         bonus: 'Z',
+//         total2: 'AA',
+//         salaire_correspondant: 'AB',
+//         rendement: 'AC',
+//         observation: 'AD',
+//         maternity_allaitement_perm: 'Q',
+//     },
+//     sheet2: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'R',
+//         repas: 'S',
+//         compensation: 'T',
+//         total: 'W',
+//         heure_suppl_30: 'X',
+//         heure_suppl_50: 'Y',
+//         heure_suppl_100: 'Z',
+//         heure_suppl_130: 'AA',
+//         heure_suppl_150: 'AB',
+//         bonus: 'AC',
+//         total2: 'AD',
+//         salaire_correspondant: 'AE',
+//         rendement: 'AF',
+//         observation: 'AG',
+//         maternity_allaitement_perm: 'U',
+//     },
+//     sheet3: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'AB',
+//         repas: 'AC',
+//         compensation: 'AD',
+//         total: 'AG',
+//         heure_suppl_30: 'AH',
+//         heure_suppl_50: 'AI',
+//         heure_suppl_100: 'AJ',
+//         heure_suppl_130: 'AK',
+//         heure_suppl_150: 'AL',
+//         bonus: 'AM',
+//         total2: 'AN',
+//         salaire_correspondant: 'AO',
+//         rendement: 'AP',
+//         observation: 'AQ',
+//         maternity_allaitement_perm: 'AE',
+//     },
+//     sheet4: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'P',
+//         repas: 'Q',
+//         compensation: 'S',
+//         total: 'V',
+//         heure_suppl_30: 'W',
+//         heure_suppl_50: 'X',
+//         heure_suppl_100: 'Y',
+//         heure_suppl_130: 'Z',
+//         heure_suppl_150: 'AA',
+//         bonus: 'AB',
+//         total2: 'AC',
+//         salaire_correspondant: 'AD',
+//         rendement: 'AE',
+//         observation: 'AF',
+//         maternity_allaitement_perm: 'R',
+//     },
+//     sheet5: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'P',
+//         repas: 'Q',
+//         compensation: 'S',
+//         total: 'U',
+//         heure_suppl_30: 'V',
+//         heure_suppl_50: 'W',
+//         heure_suppl_100: 'X',
+//         heure_suppl_130: 'Y',
+//         heure_suppl_150: 'Z',
+//         bonus: 'AA',
+//         total2: 'AB',
+//         salaire_correspondant: 'AC',
+//         rendement: 'AD',
+//         observation: 'AE',
+//         maternity_allaitement_perm: 'R',
+//     },
+//     sheet6: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'L',
+//         repas: 'M',
+//         compensation: 'O',
+//         total: 'P',
+//         heure_suppl_30: 'Q',
+//         heure_suppl_50: 'R',
+//         heure_suppl_100: 'S',
+//         heure_suppl_130: 'T',
+//         heure_suppl_150: 'U',
+//         bonus: 'V',
+//         total2: 'W',
+//         salaire_correspondant: 'X',
+//         rendement: 'Y',
+//         observation: 'Z',
+//         maternity_allaitement_perm: 'N',
+//     },
+//     sheet7: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'N',
+//         repas: 'O',
+//         compensation: 'O',
+//         total: 'S',
+//         heure_suppl_30: 'T',
+//         heure_suppl_50: 'U',
+//         heure_suppl_100: 'V',
+//         heure_suppl_130: 'W',
+//         heure_suppl_150: 'X',
+//         bonus: 'Y',
+//         total2: 'Z',
+//         salaire_correspondant: 'AA',
+//         rendement: 'AB',
+//         observation: 'AC',
+//         maternity_allaitement_perm: 'P',
+//     },
+//     sheet8: {
+//         numbering: 'A',
+//         m_code: 'A',
+//         transport: 'F',
+//         repas: 'G',
+//         // compensation: 'O',
+//         total: 'I',
+//         heure_suppl_30: 'J',
+//         heure_suppl_50: 'K',
+//         heure_suppl_100: 'L',
+//         heure_suppl_130: 'M',
+//         heure_suppl_150: 'N',
+//         bonus: 'O',
+//         total2: 'P',
+//         salaire_correspondant: 'Q',
+//         rendement: 'R',
+//         observation: 'S',
+//         maternity_allaitement_perm: 'H',
+//     },
+//     sheet9: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'I',
+//         repas: 'J',
+//         compensation: 'L',
+//         total: 'N',
+//         heure_suppl_30: 'O',
+//         heure_suppl_50: 'P',
+//         heure_suppl_100: 'Q',
+//         heure_suppl_130: 'R',
+//         heure_suppl_150: 'S',
+//         bonus: 'T',
+//         total2: 'U',
+//         salaire_correspondant: 'V',
+//         rendement: 'W',
+//         observation: 'X',
+//         maternity_allaitement_perm: 'K',
+//     },
+//     sheet10: {
+//         numbering: 'A',
+//         m_code: 'B',
+//         transport: 'L',
+//         repas: 'M',
+//         compensation: 'O',
+//         total: 'Q',
+//         heure_suppl_30: 'R',
+//         heure_suppl_50: 'S',
+//         heure_suppl_100: 'T',
+//         heure_suppl_130: 'U',
+//         heure_suppl_150: 'V',
+//         bonus: 'W',
+//         total2: 'X',
+//         salaire_correspondant: 'Y',
+//         rendement: 'Z',
+//         observation: 'AA',
+//         maternity_allaitement_perm: 'N',
+//     },
+// };
+
+// Fonction pour initialiser la variable globale
+
+
 
 async function extractDataInGSS(gssPath) {
 
+    var getCol = await getAllColumns(); // Initialise la variable globale
+    // Conversion vers l'objet GSS_Columns
+    GSS_Columns = getCol.reduce((acc, item) => {
+        acc[item.sheetName] = Object.fromEntries(item.columns);
+        return acc;
+    }, {});
     const wb = XLSX.readFile(gssPath);
 
     const data = [];
 
+    
     // loop through sheets
     for (let i = 0; i < wb.SheetNames.length; i++) {
 
         const sheetName = wb.SheetNames[i];
         const sheet = wb.Sheets[sheetName];
-
+        
         // Get the range of the sheet
         const range = XLSX.utils.decode_range(sheet['!ref']);
         // Extract row and column counts
@@ -505,13 +534,14 @@ async function extractDataInGSS(gssPath) {
         // loop through rows
         for (let j = 5; j <= rowCount; j++) {
 
-            if (!sheet[GSS_Columns[`sheet${i + 1}`].m_code + j]) {
+            
+            if (!sheet[GSS_Columns[sheetName].m_code + j]) {
                 if (j > 5) break;
                 continue;
             }
 
             const rowData = {};
-            Object.entries(GSS_Columns[`sheet${i + 1}`]).map(([key, value]) => {
+            Object.entries(GSS_Columns[sheetName]).map(([key, value]) => {
                 rowData[key] = sheet[value + j]?.v;
             });
 
@@ -528,122 +558,177 @@ async function extractDataInGSS(gssPath) {
  * Method to generate FP in excel
  * 
  */
+// async function generateFP() {
+//     const workbook = new ExcelJS.Workbook();
+
+//     // Load the workbook
+//     await workbook.xlsx.readFile('./template.xlsx');
+
+//     // get data from EMEMENT DE PAIE
+//     const sheet = workbook.worksheets[3];
+//     const rowCount = sheet.rowCount;
+
+
+//     // Loop through rows starting at row 10
+//     let startIndex = 10;
+//     const paieData = [];
+//     for (let rowIndex = startIndex; rowIndex <= rowCount; rowIndex++) {
+//         if (!sheet.getCell('A' + rowIndex).value) break;
+
+//         let data = {};
+//         Object.entries(ColumnName).map(([key, value]) => {
+//             data[key] = sheet.getCell(value + rowIndex).value;
+//         });
+
+//         paieData.push(data)
+//     }
+
+//     const worksheet = workbook.worksheets[4];
+//     const sourceStartCol = 1; // 'A'
+//     const sourceEndCol = 6;   // 'F'
+//     const sourceStartRow = 1;
+//     const sourceEndRow = 55;  // Adjust this to the last row of the data block
+
+//     const duplicateCount = paieData.length; // Total number of duplications to make
+//     const duplicatePerRow = 2; // Number of duplicates per row in each batch
+//     const rowGap = 2; // Gap of two rows
+//     const colGap = 1; // Gap of one column
+
+//     // Loop to duplicate data
+//     for (let batch = 0; batch < duplicateCount; batch++) {
+//         const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
+//         const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
+
+//         // Add logo at the starting cell of each duplicated block
+//         addLogo(workbook, worksheet, colOffset, rowOffset);
+
+//         // Copy merged cells
+//         Object.keys(worksheet._merges).forEach((mergeKey) => {
+//             const merge = worksheet._merges[mergeKey];
+//             const { top, left, bottom, right } = merge;
+//             if (top >= sourceStartRow && bottom <= sourceEndRow && left >= sourceStartCol && right <= sourceEndCol) {
+//                 const targetTop = top + rowOffset;
+//                 const targetLeft = left + colOffset;
+//                 const targetBottom = bottom + rowOffset;
+//                 const targetRight = right + colOffset;
+
+//                 // Check if the target cells are already merged
+//                 const isAlreadyMerged = Object.values(worksheet._merges).some(
+//                     (existingMerge) =>
+//                         existingMerge.top === targetTop &&
+//                         existingMerge.left === targetLeft &&
+//                         existingMerge.bottom === targetBottom &&
+//                         existingMerge.right === targetRight
+//                 );
+
+//                 if (!isAlreadyMerged) {
+//                     worksheet.mergeCells(targetTop, targetLeft, targetBottom, targetRight);
+//                 }
+//             }
+//         });
+
+//         // Copy individual cells
+//         for (let row = sourceStartRow; row <= sourceEndRow; row++) {
+//             for (let col = sourceStartCol; col <= sourceEndCol; col++) {
+//                 const cell = worksheet.getCell(row, col);
+//                 const targetCell = worksheet.getCell(row + rowOffset, col + colOffset);
+//                 targetCell.value = cell.value;
+//                 targetCell.style = { ...cell.style }; // Copy styles
+//             }
+//         }
+
+//         // Copy column widths
+//         for (let col = sourceStartCol; col <= sourceEndCol; col++) {
+//             const sourceColumn = worksheet.getColumn(col);
+//             const targetColumn = worksheet.getColumn(col + colOffset);
+//             targetColumn.width = sourceColumn.width;
+//         }
+//     }
+
+//     // After duplication, update the cells containing {M_CODE}
+//     for (let batch = 0; batch < duplicateCount; batch++) {
+//         const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
+//         const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
+
+//         // Find cell by value within the specific range of the duplicated block
+//         const cellAddress = (key) => findCellByValueInRange(worksheet, key, sourceStartRow + rowOffset, sourceEndRow + rowOffset, sourceStartCol + colOffset, sourceEndCol + colOffset);
+
+//         // Create a formula to link to the corresponding cell in the ETAT DE PAIE sheet
+//         const createLinkFormula = (cell) => `'${sheet.name}'!${cell}${startIndex + batch}`;
+
+//         // Find the cell containing {M_CODE} and update it with a formula
+//         // cells to link
+//         const cellsToLink = ['nom', 'm_code', 'matricule', 'adresse', 'usuel', 'embauche', 'matricule_cnaps', 'cin',];
+//         cellsToLink.map(cell => {
+//             const address = cellAddress(`{${cell.toUpperCase()}}`);
+//             if (address) {
+//                 const cellRef = worksheet.getCell(address);
+//                 if (typeof cellRef.value === 'string') {
+//                     cellRef.value = { formula: createLinkFormula(ColumnName[cell]) };
+//                 }
+//             }
+//         });
+
+//     }
+
+//     await workbook.xlsx.writeFile('./output.xlsx');
+//     console.log('done!');
+// }
+
 async function generateFP() {
     const workbook = new ExcelJS.Workbook();
 
-    // Load the workbook
+    console.time('Loading workbook');
     await workbook.xlsx.readFile('./template.xlsx');
+    console.timeEnd('Loading workbook');
 
-    // get data from EMEMENT DE PAIE
     const sheet = workbook.worksheets[3];
     const rowCount = sheet.rowCount;
 
-
-    // Loop through rows starting at row 10
-    let startIndex = 10;
-    const paieData = [];
-    for (let rowIndex = startIndex; rowIndex <= rowCount; rowIndex++) {
+    console.time('Extracting data');
+    let paieData = [];
+    for (let rowIndex = 10; rowIndex <= rowCount; rowIndex++) {
         if (!sheet.getCell('A' + rowIndex).value) break;
 
-        let data = {};
-        Object.entries(ColumnName).map(([key, value]) => {
+        const data = {};
+        Object.entries(ColumnName).forEach(([key, value]) => {
             data[key] = sheet.getCell(value + rowIndex).value;
         });
 
-        paieData.push(data)
+        paieData.push(data);
     }
+    console.timeEnd('Extracting data');
 
     const worksheet = workbook.worksheets[4];
-    const sourceStartCol = 1; // 'A'
-    const sourceEndCol = 6;   // 'F'
-    const sourceStartRow = 1;
-    const sourceEndRow = 55;  // Adjust this to the last row of the data block
+    const sourceRange = { startRow: 1, endRow: 55, startCol: 1, endCol: 6 };
+    const duplicateCount = paieData.length;
+    const duplicatePerRow = 2;
+    const rowGap = 2;
+    const colGap = 1;
 
-    const duplicateCount = paieData.length; // Total number of duplications to make
-    const duplicatePerRow = 2; // Number of duplicates per row in each batch
-    const rowGap = 2; // Gap of two rows
-    const colGap = 1; // Gap of one column
-
-    // Loop to duplicate data
+    console.time('Duplicating blocks');
     for (let batch = 0; batch < duplicateCount; batch++) {
-        const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
-        const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
+        const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceRange.endRow - sourceRange.startRow + 1 + rowGap);
+        const colOffset = (batch % duplicatePerRow) * (sourceRange.endCol - sourceRange.startCol + 1 + colGap);
 
-        // Add logo at the starting cell of each duplicated block
-        addLogo(workbook, worksheet, colOffset, rowOffset);
-
-        // Copy merged cells
-        Object.keys(worksheet._merges).forEach((mergeKey) => {
-            const merge = worksheet._merges[mergeKey];
-            const { top, left, bottom, right } = merge;
-            if (top >= sourceStartRow && bottom <= sourceEndRow && left >= sourceStartCol && right <= sourceEndCol) {
-                const targetTop = top + rowOffset;
-                const targetLeft = left + colOffset;
-                const targetBottom = bottom + rowOffset;
-                const targetRight = right + colOffset;
-
-                // Check if the target cells are already merged
-                const isAlreadyMerged = Object.values(worksheet._merges).some(
-                    (existingMerge) =>
-                        existingMerge.top === targetTop &&
-                        existingMerge.left === targetLeft &&
-                        existingMerge.bottom === targetBottom &&
-                        existingMerge.right === targetRight
-                );
-
-                if (!isAlreadyMerged) {
-                    worksheet.mergeCells(targetTop, targetLeft, targetBottom, targetRight);
-                }
-            }
-        });
-
-        // Copy individual cells
-        for (let row = sourceStartRow; row <= sourceEndRow; row++) {
-            for (let col = sourceStartCol; col <= sourceEndCol; col++) {
+        for (let row = sourceRange.startRow; row <= sourceRange.endRow; row++) {
+            for (let col = sourceRange.startCol; col <= sourceRange.endCol; col++) {
                 const cell = worksheet.getCell(row, col);
                 const targetCell = worksheet.getCell(row + rowOffset, col + colOffset);
                 targetCell.value = cell.value;
-                targetCell.style = { ...cell.style }; // Copy styles
+                targetCell.style = { ...cell.style };
             }
         }
-
-        // Copy column widths
-        for (let col = sourceStartCol; col <= sourceEndCol; col++) {
-            const sourceColumn = worksheet.getColumn(col);
-            const targetColumn = worksheet.getColumn(col + colOffset);
-            targetColumn.width = sourceColumn.width;
-        }
     }
+    console.timeEnd('Duplicating blocks');
 
-    // After duplication, update the cells containing {M_CODE}
-    for (let batch = 0; batch < duplicateCount; batch++) {
-        const rowOffset = Math.floor(batch / duplicatePerRow) * (sourceEndRow - sourceStartRow + 1 + rowGap);
-        const colOffset = (batch % duplicatePerRow) * (sourceEndCol - sourceStartCol + 1 + colGap);
-
-        // Find cell by value within the specific range of the duplicated block
-        const cellAddress = (key) => findCellByValueInRange(worksheet, key, sourceStartRow + rowOffset, sourceEndRow + rowOffset, sourceStartCol + colOffset, sourceEndCol + colOffset);
-
-        // Create a formula to link to the corresponding cell in the ETAT DE PAIE sheet
-        const createLinkFormula = (cell) => `'${sheet.name}'!${cell}${startIndex + batch}`;
-
-        // Find the cell containing {M_CODE} and update it with a formula
-        // cells to link
-        const cellsToLink = ['nom', 'm_code', 'matricule', 'adresse', 'usuel', 'embauche', 'matricule_cnaps', 'cin',];
-        cellsToLink.map(cell => {
-            const address = cellAddress(`{${cell.toUpperCase()}}`);
-            if (address) {
-                const cellRef = worksheet.getCell(address);
-                if (typeof cellRef.value === 'string') {
-                    cellRef.value = { formula: createLinkFormula(ColumnName[cell]) };
-                }
-            }
-        });
-
-    }
-
+    console.time('Writing output');
     await workbook.xlsx.writeFile('./output.xlsx');
-    console.log('done!');
+    console.timeEnd('Writing output');
+
+    console.log('Done!');
 }
+
 
 function addLogo(wb, ws, colOffset, rowOffset) {
     // Add the image to the workbook

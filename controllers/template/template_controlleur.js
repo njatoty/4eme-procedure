@@ -155,6 +155,12 @@ async function allColumns (req, res) {
         res.status(500).send({ error: 'Unable to fetch files', details: error.message });
     }
 }
+
+async function getAllColumns (req, res) {
+      const files = await File.find();
+      
+      return files
+}
 module.exports = {
   addOrUpdateColumn,
   removeColumn,
@@ -162,7 +168,8 @@ module.exports = {
   createSheet,
   allColumns,
   deleteSheetById,
-  updateColumn
+  updateColumn, 
+  getAllColumns
 };
 
 // (router) => {
