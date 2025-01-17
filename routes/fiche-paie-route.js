@@ -12,13 +12,21 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         // Determine the filename based on the route
         let fileName = '';
-        if (req.url === '/upload-gss') {
+        
+        if (file.fieldname === 'gss') {
             fileName = 'gss'; // Fixed name for gss uploads
-        } else if (req.url === '/upload-template') {
+        } else if (file.fieldname) {
             fileName = 'template'; // Fixed name for template uploads
         } else {
             fileName = 'unknown'; // Fallback name for unknown routes
         }
+        // if (req.url === '/upload-gss') {
+        //     fileName = 'gss'; // Fixed name for gss uploads
+        // } else if (req.url === '/upload-template') {
+        //     fileName = 'template'; // Fixed name for template uploads
+        // } else {
+        //     fileName = 'unknown'; // Fallback name for unknown routes
+        // }
     
         // Retain the original extension
         const extension = path.extname(file.originalname);
@@ -69,6 +77,7 @@ router.post('/start-processus',
         { name: 'gss', maxCount: 1 },
         { name: 'template', maxCount: 1 }
     ]),
+    
     startProcessus
 );
 /**
