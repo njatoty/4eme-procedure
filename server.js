@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fichePaieRouter = require('./routes/fiche-paie-route');
 const templateRouter = require('./routes/template-route');
+const irsaDuRouter = require('./routes/irsadu-route');
 const mongoose = require('mongoose');
 require('dotenv').config();
 // Define a port
@@ -32,6 +33,7 @@ app.use(express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use('/fiche-paie', fichePaieRouter);
 app.use('/template', templateRouter);
+app.use('/irsa-du', irsaDuRouter);
 
 // Start the server
 app.listen(PORT, () => {
