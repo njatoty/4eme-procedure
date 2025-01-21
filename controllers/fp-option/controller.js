@@ -1,6 +1,6 @@
 // controllers/irsaController.js
 
-const IRSA = require('../../models/IRSADuModel');
+const FPOption = require('../../models/FPOption.js');
 
 const defaultTranches = [
     { seuil: 350000, plage: 50000, taux: 5 },
@@ -12,10 +12,10 @@ const defaultTranches = [
 // Get the single IRSA entry (create if not exists)
 const getIRSA = async (req, res) => {
     try {
-        let irsaEntry = await IRSA.findOne();
+        let irsaEntry = await FPOption.findOne();
         if (!irsaEntry) {
             // Create default IRSA if none exists
-            irsaEntry = new IRSA({ valeurMinimum: 3000, tranches: [...defaultTranches] });
+            irsaEntry = new FPOption({ valeurMinimum: 3000, tranches: [...defaultTranches] });
             await irsaEntry.save();
         }
         res.status(200).json(irsaEntry);
@@ -28,7 +28,7 @@ const getIRSA = async (req, res) => {
 const updateIRSA = async (req, res) => {
     try {
         const { valeurMinimum } = req.body;
-        const updatedIRSA = await IRSA.findOneAndUpdate(
+        const updatedIRSA = await FPOption.findOneAndUpdate(
             {},
             { valeurMinimum },
             { new: true, upsert: true, runValidators: true } // Create if not exists
@@ -43,7 +43,7 @@ const updateIRSA = async (req, res) => {
 const addTranche = async (req, res) => {
     try {
         const { seuil, plage, taux } = req.body;
-        const updatedIRSA = await IRSA.findOneAndUpdate(
+        const updatedIRSA = await FPOption.findOneAndUpdate(
             {},
             { $push: { tranches: { seuil, plage, taux } } },
             { new: true }
@@ -60,7 +60,7 @@ const addManyTranches = async (req, res) => {
     try {
         const { tranches } = req.body;
         if (Array.isArray(tranches)) {
-            const updatedIRSA = await IRSA.findOneAndUpdate(
+            const updatedIRSA = await FPOption.findOneAndUpdate(
                 {},
                 { $push: { tranches: { $each: tranches } } },
                 { new: true }
@@ -80,7 +80,7 @@ const updateTranche = async (req, res) => {
     try {
         const { trancheId } = req.params;
         const { seuil, plage, taux } = req.body;
-        const updatedIRSA = await IRSA.findOneAndUpdate(
+        const updatedIRSA = await FPOption.findOneAndUpdate(
             { 'tranches._id': trancheId },
             {
                 $set: {
@@ -106,7 +106,7 @@ const updateTranche = async (req, res) => {
 const deleteTranche = async (req, res) => {
     try {
         const { trancheId } = req.params;
-        const updatedIRSA = await IRSA.findOneAndUpdate(
+        const updatedIRSA = await FPOption.findOneAndUpdate(
             {},
             { $pull: { tranches: { _id: trancheId } } },
             { new: true }
@@ -126,7 +126,7 @@ const deleteTranche = async (req, res) => {
 const deleteAllTranches = async (req, res) => {
     try {
         
-        const updatedIRSA = await IRSA.findOneAndUpdate(
+        const updatedIRSA = await FPOption.findOneAndUpdate(
             {},
             { $set: { tranches: [] } },
             { new: true }
@@ -138,6 +138,22 @@ const deleteAllTranches = async (req, res) => {
     }
 };
 
+
+// update plafond cnaps
+const updatePladfondCNAPS = async (req, res) => {
+    try {
+        const { plafondCNAPS } = req.body;
+        const updatedFPOption = await FPOption.findOneAndUpdate(
+            {},
+            { plafondCNAPS },
+            { new: true, upsert: true, runValidators: true } // Create if not exists
+        );
+        res.status(200).json(updatedFPOption);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getIRSA,
     updateIRSA,
@@ -146,4 +162,5 @@ module.exports = {
     updateTranche,
     deleteTranche,
     deleteAllTranches,
+    updatePladfondCNAPS
 };

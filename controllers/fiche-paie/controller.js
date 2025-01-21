@@ -1,5 +1,5 @@
 const path = require("path");
-const { extractDataInGSS, generateReport } = require("../../methods/methods");
+const { extractDataInGSS, generateReport, extractDataInMajoration, mergeDataWithKey } = require("../../methods/methods");
 const fs = require('fs');
 
 // get upload paths folder
@@ -72,22 +72,10 @@ async function getFileByName(req, res) {
 // Method to process
 async function startProcessus(req, res) {
 
-    // get body
-    const {
-        dateDebut,
-        dateFin,
-        jourOuvrables,
-        jourOuvres,
-        joursCalendaires,
-        platFond
-    } = req.body;
-
     // Access the uploaded files
     const gssFile = req.files['gss'] ? req.files['gss'][0] : null; // First (and only) 'gss' file
+    const MajorationFile = req.files['majoration'] ? req.files['majoration'][0] : null; // First (and only) 'gss' file
     
-    const templateFile = req.files['template'] ? req.files['template'][0] : null; //
-    
-
     // check gss file
     if (!gssFile) {
         return res.status(400).json({
@@ -97,11 +85,18 @@ async function startProcessus(req, res) {
     }
 
     // extract data in gss file
-    const data = await extractDataInGSS(gssFile.path);
+    const gssData = await extractDataInGSS(gssFile.path);
+    const majorationData = await extractDataInMajoration(MajorationFile.path);
+
+    // merge data with m_code
+    const mergedData = mergeDataWithKey(gssData, majorationData, 'm_code');
+
+    console.log(majorationData)
+    console.log(mergedData[0])
 
     res.json({
         ok: true,
-        data: data
+        data: mergedData
     });
 
 }
@@ -111,7 +106,6 @@ async function copyDataInTheTemplate(req, res) {
     try {
         
         const { data, variable } = req.body;
-        
         
         const templatePath = uploadsPath + '/template.xlsx';
         const outFileName = 'result.xlsx'

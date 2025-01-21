@@ -9,6 +9,11 @@ const trancheSchema = new mongoose.Schema({
 const irsaSchema = new mongoose.Schema({
     valeurMinimum: { type: Number, required: true },
     tranches: [trancheSchema], // Use trancheSchema directly in an array
+    // cnaps
+    plafondCNAPS: {
+        type: Number,
+        default: 262680
+    }
 }, {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
@@ -32,4 +37,4 @@ irsaSchema.virtual('formula').get(function() {
     return generateExcelFormula(this.tranches, "W10", "X10", this.valeurMinimum);
 });
 
-module.exports = mongoose.model('irsadu', irsaSchema);
+module.exports = mongoose.model('FPOption', irsaSchema);
