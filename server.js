@@ -35,6 +35,8 @@ app.use('/fiche-paie', fichePaieRouter);
 app.use('/template', templateRouter);
 app.use('/fp-option', fpOptionRouter);
 
+app.get("/", (req, res) => res.send("Express on Vercel"));
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
