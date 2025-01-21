@@ -37,6 +37,9 @@ app.use('/fp-option', fpOptionRouter);
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
+// Export the app for Vercel
+module.exports = app;
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
